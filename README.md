@@ -19,7 +19,7 @@ The API includes user registration, token generation, access token generation fr
 
 ### Installation
 
-1. clone the repository from develop branch
+1. clone the repository
 
 2. Create and activate a virtual environment if it doesn't exist in the project folder:
 ```

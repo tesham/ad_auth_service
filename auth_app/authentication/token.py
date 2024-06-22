@@ -1,15 +1,16 @@
 import datetime
 
 import jwt
+from django.utils import timezone
 
 from auth_app.models.black_list_token import BlacklistedToken
 from auth_service import settings
 from rest_framework import exceptions
 
-from auth_app.models import User
+from auth_app.models import User, UserSession
 
 
-class TokenGeneration():
+class TokenGeneration(object):
 
     @classmethod
     def generate_access_token(cls, user):
@@ -69,23 +70,34 @@ class TokenGeneration():
     def get_access_token_from_refresh(cls, refresh_token):
 
         """
-            Generate access token from refresh token, firstly the token is verified if it is blacklisted
+            Generate access token from refresh token
+            validation:
+             1. Check if refresh token is provided
+             2. Checking if the token blacklisted
+             3. If refresh token is expired then inactive the user session for that token
 
             :param  refresh_token
             :return access token
         """
 
-        if not cls.verify_refresh_token(refresh_token=refresh_token):
-            raise Exception('blacklisted refresh token')
-
         if refresh_token is None:
             raise exceptions.AuthenticationFailed(
-                'Authentication credentials were not provided.')
+                'Refresh token not provided.')
+
+        #  Check if refresh_token is valid or not used
+        if not cls.verify_refresh_token(refresh_token=refresh_token):
+            raise Exception('Blacklisted refresh token')
+
         try:
             private_key = getattr(settings, 'JWT_SECRET_KEY')
             payload = jwt.decode(
                 refresh_token, private_key, algorithms=['HS256'])
         except jwt.ExpiredSignatureError:
+            session = UserSession.objects.filter(refresh_token=refresh_token, is_active=True).first()
+            if session:
+                session.logout_time = timezone.now()
+                session.is_active = False
+                session.save()
             raise exceptions.AuthenticationFailed(
                 'expired refresh token, please login again.')
 

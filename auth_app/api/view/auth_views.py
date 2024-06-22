@@ -61,6 +61,9 @@ class GenerateJwtTokenApiView(UnauthenticatedView):
             user = authenticate(username=username, password=password)
 
             if user:
+                if AuthDatalayer.check_active_session_of_user(user=user):
+                    raise Exception('Already active session present')
+
                 access_token = TokenGeneration.generate_access_token(user)
                 refresh_token = TokenGeneration.generate_refresh_token(user)
 
@@ -122,9 +125,11 @@ class LogoutView(AuthenticatedView):
 
             if not refresh_token:
                 raise Exception('Invalid refresh token')
-            session = UserSession.objects.get(refresh_token=refresh_token)
-            session.logout_time = timezone.now()
-            session.save()
+            session = UserSession.objects.filter(refresh_token=refresh_token, is_active=True).first()
+            if session:
+                session.logout_time = timezone.now()
+                session.is_active = False
+                session.save()
 
             BlacklistedToken.objects.create(token=refresh_token)
 

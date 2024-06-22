@@ -1,4 +1,4 @@
-from auth_app.models import User
+from auth_app.models import User, UserSession
 
 
 class AuthDatalayer(object):
@@ -18,3 +18,10 @@ class AuthDatalayer(object):
         user.save()
 
         return 0
+
+    @classmethod
+    def check_active_session_of_user(cls, user):
+
+        if UserSession.objects.filter(user=user, is_active=True).exists():
+            return True
+        return False
