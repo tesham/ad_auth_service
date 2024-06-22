@@ -1,13 +1,52 @@
 from django.contrib.auth import authenticate
+from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import logout
 from auth_app.authentication import TokenGeneration
+from auth_app.datalayer import AuthDatalayer
 from auth_app.models.black_list_token import BlacklistedToken
-from auth_app.serializers import TokenSerializer, RefreshTokenSerializer
+from auth_app.serializers import TokenSerializer, RefreshTokenSerializer, UserSerializer
 from auth_app.views import UnauthenticatedView, AuthenticatedView
 from auth_app.models import UserSession
 from django.utils import timezone
+
+
+class IsSuperUser(BasePermission):
+
+    def has_permission(self, request, view):
+        return request.user.is_superuser
+
+
+class RegisterUserApiView(AuthenticatedView):
+    permission_classes = (IsSuperUser,)
+
+    def post(self, request):
+
+        try:
+            serializer = UserSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            is_error = AuthDatalayer.create_user(
+                username=serializer.validated_data.get('username'),
+                email=serializer.validated_data.get('email'),
+                password=serializer.validated_data.get('password')
+            )
+
+            return Response(
+                dict(
+                    is_error=is_error,
+                    message='success'
+                ), status=status.HTTP_200_OK
+            )
+
+        except Exception as exe:
+            return Response(
+                dict(
+                    status=500,
+                    message=str(exe)
+                ), status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class GenerateJwtTokenApiView(UnauthenticatedView):
@@ -91,7 +130,7 @@ class LogoutView(AuthenticatedView):
 
             logout(request)
 
-            return Response(status=status.HTTP_205_RESET_CONTENT)
+            return Response(dict(message="Successfully logged out"), status=status.HTTP_205_RESET_CONTENT)
 
         except Exception as exe:
             return Response(

@@ -13,6 +13,12 @@ class TokenGeneration():
 
     @classmethod
     def generate_access_token(cls, user):
+
+        """
+            Generate access token for user
+            Expiration time : 2 hours
+        """
+
         payload = {
             'iss': 'tesham29@gmail.com',
             'sub': 'access token',
@@ -29,6 +35,11 @@ class TokenGeneration():
 
     @classmethod
     def generate_refresh_token(cls, user):
+
+        """
+            Generate refresh token for user, It is used to generate access token if access token expired
+            Expiration time : 1 day
+        """
 
         refresh_token_payload = {
             'iss': 'tesham29@gmail.com',
@@ -56,6 +67,13 @@ class TokenGeneration():
 
     @classmethod
     def get_access_token_from_refresh(cls, refresh_token):
+
+        """
+            Generate access token from refresh token, firstly the token is verified if it is blacklisted
+
+            :param  refresh_token
+            :return access token
+        """
 
         if not cls.verify_refresh_token(refresh_token=refresh_token):
             raise Exception('blacklisted refresh token')
