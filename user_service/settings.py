@@ -21,7 +21,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-u&^b0ki1$%q=*f_9zc$=op7tt418s44cft*#r*)+lpc-=z=)+8'
+SECRET_KEY = os.getenv('SECRET_KEY') if 'SECRET_KEY' in os.environ else 'django-insecure-u&^b0ki1$%q=*f_9zc$=op7tt418s44cft*#r*)+lpc-=z=)+8'
+
+JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY') if 'JWT_SECRET_KEY' in os.environ else 'n8QgAmK5j3ZxWt6qjPYd_YwN7ap_1gMD1sCZ_ZxHrD1'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -38,6 +40,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'corsheaders',
+    'rest_framework_simplejwt.token_blacklist',  # For token blacklisting
+    'auth_app'
 ]
 
 MIDDLEWARE = [
@@ -50,7 +56,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'auth_service.urls'
+ROOT_URLCONF = 'user_service.urls'
 
 TEMPLATES = [
     {
@@ -78,14 +84,15 @@ WSGI_APPLICATION = 'auth_service.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'HOST': os.getenv('DATABASE_HOST', ''),
+        'HOST': os.getenv('DATABASE_HOST', '127.0.0.1'),
         'PORT': os.getenv('DATABASE_PORT', 5432),
-        'NAME': os.getenv('DATABASE_NAME', ''),
-        'USER': os.getenv('DATABASE_USER', ''),
-        'PASSWORD': os.getenv('DATABASE_PASSWORD', '')
+        'NAME': os.getenv('DATABASE_NAME', 'ad_users'),
+        'USER': os.getenv('DATABASE_USER', 'postgres'),
+        'PASSWORD': os.getenv('DATABASE_PASSWORD', 'admin1234')
     }
 }
 
+AUTH_USER_MODEL = 'auth_app.User'
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -111,7 +118,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Dhaka'
 
 USE_I18N = True
 
