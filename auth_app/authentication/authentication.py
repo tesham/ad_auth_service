@@ -1,7 +1,7 @@
 import jwt
 from rest_framework.authentication import BaseAuthentication
 from rest_framework import exceptions
-from user_service import settings
+from auth_service import settings
 from auth_app.models import User
 
 

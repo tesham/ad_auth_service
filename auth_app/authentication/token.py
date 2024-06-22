@@ -2,7 +2,8 @@ import datetime
 
 import jwt
 
-from user_service import settings
+from auth_app.models.black_list_token import BlacklistedToken
+from auth_service import settings
 from rest_framework import exceptions
 
 from auth_app.models import User
@@ -17,8 +18,8 @@ class TokenGeneration():
             'sub': 'access token',
             'user_id': user.id,
             'role': 'user',
-            'exp': datetime.datetime.now() + datetime.timedelta(days=0, hours=2, minutes=0),
-            'iat': datetime.datetime.now(),
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(days=0, hours=2, minutes=0),
+            'iat': datetime.datetime.utcnow(),
         }
         private_key = getattr(settings, 'JWT_SECRET_KEY')
         access_token = jwt.encode(payload,
@@ -34,8 +35,8 @@ class TokenGeneration():
             'sub': 'refresh token',
             'user_id': user.id,
             'role': 'user',
-            'exp': datetime.datetime.now() + datetime.timedelta(days=1, hours=0, minutes=0),
-            'iat': datetime.datetime.now(),
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(days=1, hours=0, minutes=0),
+            'iat': datetime.datetime.utcnow(),
         }
         private_key = getattr(settings, 'JWT_SECRET_KEY')
         refresh_token = jwt.encode(
@@ -45,7 +46,20 @@ class TokenGeneration():
         return refresh_token
 
     @classmethod
+    def verify_refresh_token(cls, refresh_token):
+        # Check if the refresh token is blacklisted
+        if BlacklistedToken.objects.filter(token=refresh_token).exists():
+            return False
+        else:
+            return True
+
+
+    @classmethod
     def get_access_token_from_refresh(cls, refresh_token):
+
+        if not cls.verify_refresh_token(refresh_token=refresh_token):
+            raise Exception('blacklisted refresh token')
+
         if refresh_token is None:
             raise exceptions.AuthenticationFailed(
                 'Authentication credentials were not provided.')
