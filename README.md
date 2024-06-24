@@ -19,7 +19,7 @@ The API includes user registration, token generation, access token generation fr
 
 ### Installation
 
-1. clone the repository from develop branch
+1. clone the repository
 
 2. Create and activate a virtual environment if it doesn't exist in the project folder:
 ```
@@ -72,7 +72,7 @@ Update the `settings.py` file with your configurations. Ensure you have the `SEC
 #### Endpoints
 
 - **User Registration:**
--  Only superuser has access to create user
+- Only superuser has access to create user
 
     ```http
     POST /api/register/
@@ -96,6 +96,7 @@ Update the `settings.py` file with your configurations. Ensure you have the `SEC
     ```
 
 - **User Login:**
+- Only one active session will be preserved. If user has an active session and login api is called then user is denied to get token. User can get token again after successful logout
 
     ```http
     POST /api/auth/token/

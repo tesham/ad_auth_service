@@ -77,6 +77,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'auth_service.wsgi.application'
 
+# RabbitMQ config
+RABBITMQ_HOST = 'localhost'
+RABBITMQ_PORT = 5672
+RABBITMQ_USER = 'guest'
+RABBITMQ_PASSWORD = 'guest'
+
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
