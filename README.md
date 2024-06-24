@@ -72,7 +72,7 @@ Update the `settings.py` file with your configurations. Ensure you have the `SEC
 #### Endpoints
 
 - **User Registration:**
--  Only superuser has access to create user
+- Only superuser has access to create user
 
     ```http
     POST /api/register/
@@ -96,6 +96,7 @@ Update the `settings.py` file with your configurations. Ensure you have the `SEC
     ```
 
 - **User Login:**
+- Only one active session will be preserved. If user has an active session and login api is called then user is denied to get token. User can get token again after successful logout
 
     ```http
     POST /api/auth/token/

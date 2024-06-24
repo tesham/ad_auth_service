@@ -19,11 +19,13 @@ class TokenGeneration(object):
             Generate access token for user
             Expiration time : 2 hours
         """
-
+        user_session = UserSession.objects.filter(user=user, is_active=True).first()
         payload = {
             'iss': 'tesham29@gmail.com',
             'sub': 'access token',
             'user_id': user.id,
+            'name': user.username,
+            'session_id': user_session.id if user_session else None,
             'role': 'user',
             'exp': datetime.datetime.utcnow() + datetime.timedelta(days=0, hours=2, minutes=0),
             'iat': datetime.datetime.utcnow(),
@@ -46,6 +48,7 @@ class TokenGeneration(object):
             'iss': 'tesham29@gmail.com',
             'sub': 'refresh token',
             'user_id': user.id,
+            'name': user.username,
             'role': 'user',
             'exp': datetime.datetime.utcnow() + datetime.timedelta(days=1, hours=0, minutes=0),
             'iat': datetime.datetime.utcnow(),

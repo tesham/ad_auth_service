@@ -6,6 +6,7 @@ from django.contrib.auth import logout
 from auth_app.authentication import TokenGeneration
 from auth_app.datalayer import AuthDatalayer
 from auth_app.models.black_list_token import BlacklistedToken
+from auth_app.rabbitmq_producer import send_message
 from auth_app.serializers import TokenSerializer, RefreshTokenSerializer, UserSerializer
 from auth_app.views import UnauthenticatedView, AuthenticatedView
 from auth_app.models import UserSession
@@ -64,10 +65,26 @@ class GenerateJwtTokenApiView(UnauthenticatedView):
                 if AuthDatalayer.check_active_session_of_user(user=user):
                     raise Exception('Already active session present')
 
-                access_token = TokenGeneration.generate_access_token(user)
                 refresh_token = TokenGeneration.generate_refresh_token(user)
 
-                UserSession.objects.create(user=user, refresh_token=refresh_token)
+                session_ob = UserSession.objects.create(user=user, refresh_token=refresh_token)
+
+                access_token = TokenGeneration.generate_access_token(user)
+
+                try:
+
+                    message = dict(
+                        user=user.username if user else '',
+                        session_id=session_ob.id if session_ob else '',
+                        module='AUTH',
+                        label='Login',
+                        action=f'user logged in  : {user.username}'
+                    )
+
+                    send_message("audit_queue", message)
+                except Exception as exe:
+                    print('RabbitMQ exception in auth login', str(exe))
+
 
                 data = dict(
                     access=access_token,
@@ -134,6 +151,20 @@ class LogoutView(AuthenticatedView):
             BlacklistedToken.objects.create(token=refresh_token)
 
             logout(request)
+
+            try:
+
+                message = dict(
+                    user=session.user.username if session else '',
+                    session_id=session.id if session else '',
+                    module='AUTH',
+                    label='Logout',
+                    action=f'user logged out  : {session.user.username}'
+                )
+
+                send_message("audit_queue", message)
+            except Exception as exe:
+                print('RabbitMQ exception in auth logout', str(exe))
 
             return Response(dict(message="Successfully logged out"), status=status.HTTP_205_RESET_CONTENT)
 
