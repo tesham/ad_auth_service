@@ -8,6 +8,7 @@ The API includes user registration, token generation, access token generation fr
 - User registration with email verification
 - User login with JWT authentication
 - Token-based authentication using Django REST Framework JWT
+- Act as RabbitMQ producer. Send auth audit message to consumer
 - PostgreSQL as the database backend
 
 ### Prerequisites
@@ -50,11 +51,34 @@ The API includes user registration, token generation, access token generation fr
 ```
     python manage.py makemigrations
     python manage.py migrate
+    
+    models :
+    
+    users : storing user info like : username, password, etc
+    
+    user_sessions : use to store user session after login to logout. Only one session can be active at a time
+    class UserSession(models.Model):
+        user = models.ForeignKey(
+            AUTH_USER_MODEL, on_delete=models.DO_NOTHING, null=True, blank=True, related_name='sessions'
+        )
+        login_time = models.DateTimeField(auto_now_add=True)
+        is_active = models.BooleanField(default=True)
+        logout_time = models.DateTimeField(null=True, blank=True)
+        refresh_token = models.CharField(max_length=500)
+      
+     blacklisted_tokens: blacklist refresh token so that it can't be used
+     class BlacklistedToken(models.Model):
+        token = models.CharField(max_length=500, unique=True)
+        blacklisted_at = models.DateTimeField(default=timezone.now)
 ```
 
-6. Create a superuser (admin)
+6. Put RabbitMQ config in setting.py
+
 ```
-    python manage.py createsuperuser
+    RABBITMQ_HOST = os.getenv('RABBITMQ_HOST', 'rabbitmq')
+    RABBITMQ_PORT = 5672
+    RABBITMQ_USER = 'guest'
+    RABBITMQ_PASSWORD = 'guest'
 ```
     
 7. Start the server:
@@ -67,93 +91,3 @@ The API includes user registration, token generation, access token generation fr
 
 Update the `settings.py` file with your configurations. Ensure you have the `SECRET_KEY`, `JWT_SECRET_KEY` and other necessary configurations set.
 
-### Usage
-
-#### Endpoints
-
-- **User Registration:**
-- Only superuser has access to create user
-
-    ```http
-    POST /api/register/
-    ```
-
-    Request body:
-    ```json
-    {
-        "username": "yourusername",
-        "password": "yourpassword",
-        "email": "youremail@example.com"
-    }
-    ```
-  
-    Response:
-    ```json
-    {
-      "is_error": 0,
-      "message": "success"
-    }
-    ```
-
-- **User Login:**
-- Only one active session will be preserved. If user has an active session and login api is called then user is denied to get token. User can get token again after successful logout
-
-    ```http
-    POST /api/auth/token/
-    ```
-
-    Request body:
-    ```json
-    {
-        "username": "yourusername",
-        "password": "yourpassword"
-    }
-    ```
-
-    Response:
-    ```json
-    {
-        "access_token": "youraccesstoken",
-        "refresh_token": "yourrefreshtoken"
-    }
-    ```
-
-- **Refresh Token:**
-
-    ```http
-    POST /api/auth/token/refresh/
-    ```
-
-    Request body:
-    ```json
-    {
-        "refresh_token": "yourrefreshtoken"
-    }
-    ```
-
-    Response:
-    ```json
-    {
-        "access_token": "newaccesstoken"
-    }
-    ```
-
-- **Logout (Blacklist Refresh Token):**
-
-    ```http
-    POST /api/auth/logout/
-    ```
-
-    Request body:
-    ```json
-    {
-        "refresh_token": "yourrefreshtoken"
-    }
-    ```
-
-    Response:
-    ```json
-    {
-        "message": "Successfully logged out."
-    }
-    ```
