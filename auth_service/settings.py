@@ -78,7 +78,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'auth_service.wsgi.application'
 
 # RabbitMQ config
-RABBITMQ_HOST = 'localhost'
+RABBITMQ_HOST = os.getenv('RABBITMQ_HOST', 'rabbitmq')
 RABBITMQ_PORT = 5672
 RABBITMQ_USER = 'guest'
 RABBITMQ_PASSWORD = 'guest'
@@ -90,11 +90,11 @@ RABBITMQ_PASSWORD = 'guest'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'HOST': os.getenv('DATABASE_HOST', '127.0.0.1'),
-        'PORT': os.getenv('DATABASE_PORT', 5432),
-        'NAME': os.getenv('DATABASE_NAME', 'ad_users'),
-        'USER': os.getenv('DATABASE_USER', 'postgres'),
-        'PASSWORD': os.getenv('DATABASE_PASSWORD', 'admin1234')
+        'HOST': os.getenv('POSTGRES_HOST', '127.0.0.1'),
+        'PORT': os.getenv('POSTGRES_PORT', 5432),
+        'NAME': os.getenv('POSTGRES_DB', 'ad_users'),
+        'USER': os.getenv('POSTGRES_USER', 'postgres'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'admin1234')
     }
 }
 
