@@ -6,9 +6,10 @@ The API includes user registration, token generation, access token generation fr
 ## Features
 
 - User registration with email verification
-- User login with JWT authentication
 - Token-based authentication using Django REST Framework JWT
-- Act as RabbitMQ producer. Send auth audit message to consumer
+- User login with JWT authentication, return access and refresh token
+- Can return access token from refresh token
+- Act as a RabbitMQ producer. Send auth audit message to consumer[Auth Service]
 - PostgreSQL as the database backend
 
 ### Prerequisites
@@ -54,22 +55,52 @@ The API includes user registration, token generation, access token generation fr
     
     models :
     
-    users : storing user info like : username, password, etc
+    users : storing user info
+    -- This script only contains the table creation statements and does not fully represent the table in the database. Do not use it as a backup.
+
+    -- Table Definition
+    CREATE TABLE "public"."users" (
+        "id" int8 NOT NULL,
+        "password" varchar NOT NULL,
+        "last_login" timestamptz,
+        "is_superuser" bool NOT NULL,
+        "username" varchar NOT NULL,
+        "first_name" varchar NOT NULL,
+        "last_name" varchar NOT NULL,
+        "email" varchar NOT NULL,
+        "is_staff" bool NOT NULL,
+        "is_active" bool NOT NULL,
+        "date_joined" timestamptz NOT NULL,
+        "name" varchar,
+        "contact_number" varchar,
+        PRIMARY KEY ("id")
+    );
     
-    user_sessions : use to store user session after login to logout. Only one session can be active at a time
-    class UserSession(models.Model):
-        user = models.ForeignKey(
-            AUTH_USER_MODEL, on_delete=models.DO_NOTHING, null=True, blank=True, related_name='sessions'
-        )
-        login_time = models.DateTimeField(auto_now_add=True)
-        is_active = models.BooleanField(default=True)
-        logout_time = models.DateTimeField(null=True, blank=True)
-        refresh_token = models.CharField(max_length=500)
+    user_sessions : use to store user session after login till logout. Only one session can be active at a time
+    -- This script only contains the table creation statements and does not fully represent the table in the database. Do not use it as a backup.
+
+    -- Table Definition
+    CREATE TABLE "public"."user_sessions" (
+        "id" int8 NOT NULL,
+        "login_time" timestamptz NOT NULL,
+        "logout_time" timestamptz,
+        "refresh_token" varchar NOT NULL,
+        "user_id" int8,
+        "is_active" bool NOT NULL,
+        CONSTRAINT "user_sessions_user_id_43ce9642_fk_users_id" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id"),
+        PRIMARY KEY ("id")
+    );
       
      blacklisted_tokens: blacklist refresh token so that it can't be used
-     class BlacklistedToken(models.Model):
-        token = models.CharField(max_length=500, unique=True)
-        blacklisted_at = models.DateTimeField(default=timezone.now)
+     -- This script only contains the table creation statements and does not fully represent the table in the database. Do not use it as a backup.
+
+    -- Table Definition
+    CREATE TABLE "public"."blacklisted_tokens" (
+        "id" int8 NOT NULL,
+        "token" varchar NOT NULL,
+        "blacklisted_at" timestamptz NOT NULL,
+        PRIMARY KEY ("id")
+    );
 ```
 
 6. Put RabbitMQ config in setting.py
