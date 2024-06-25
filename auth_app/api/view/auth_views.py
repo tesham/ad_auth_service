@@ -19,8 +19,8 @@ class IsSuperUser(BasePermission):
         return request.user.is_superuser
 
 
-class RegisterUserApiView(AuthenticatedView):
-    permission_classes = (IsSuperUser,)
+class RegisterUserApiView(UnauthenticatedView):
+    # permission_classes = (IsSuperUser,)
 
     def post(self, request):
 
